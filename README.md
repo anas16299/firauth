@@ -79,33 +79,33 @@ The installer will ask you:
 
 ```env
 # Core
-AUTHX_MAIN_SERVICE=true|false
-AUTHX_STRATEGY=cookie|jwt
+FIRAUTH_MAIN_SERVICE=true|false
+FIRAUTH_STRATEGY=cookie|jwt
 
 # Cookie
-AUTHX_COOKIE_NAME=authx_token
-AUTHX_COOKIE_DOMAIN=.your-domain.com
-AUTHX_COOKIE_SECURE=true
-AUTHX_COOKIE_HTTP_ONLY=true
-AUTHX_COOKIE_SAMESITE=Lax   # Lax|Strict|None (use None with HTTPS only)
-AUTHX_COOKIE_LIFETIME=60    # minutes
+FIRAUTH_COOKIE_NAME=FIRAUTH_token
+FIRAUTH_COOKIE_DOMAIN=.your-domain.com
+FIRAUTH_COOKIE_SECURE=true
+FIRAUTH_COOKIE_HTTP_ONLY=true
+FIRAUTH_COOKIE_SAMESITE=Lax   # Lax|Strict|None (use None with HTTPS only)
+FIRAUTH_COOKIE_LIFETIME=60    # minutes
 
 # Redis session binding
-AUTHX_SESSION_REDIS=session
-AUTHX_SESSION_KEY_PREFIX=session_
-AUTHX_SESSION_TTL=0         # 0=no expiry at Redis level
+FIRAUTH_SESSION_REDIS=session
+FIRAUTH_SESSION_KEY_PREFIX=session_
+FIRAUTH_SESSION_TTL=0         # 0=no expiry at Redis level
 
 # JWT behavior
-AUTHX_REMEMBER_DAYS=90
-AUTHX_RENEW_WINDOW=600       # refresh only if <= 10m remaining (or expired)
-AUTHX_USE_MODEL_CLAIMS=true  # use getJWTCustomClaims() from your User model
-AUTHX_BIND_SESSION=false     # bind Redis session at login automatically
+FIRAUTH_REMEMBER_DAYS=90
+FIRAUTH_RENEW_WINDOW=600       # refresh only if <= 10m remaining (or expired)
+FIRAUTH_USE_MODEL_CLAIMS=true  # use getJWTCustomClaims() from your User model
+FIRAUTH_BIND_SESSION=false     # bind Redis session at login automatically
 
 # Route options
-AUTHX_ROUTES_PREFIX=authX
-AUTHX_ROUTES_EXPOSE_LOGIN=true
-AUTHX_ROUTES_EXPOSE_REFRESH=true
-AUTHX_ROUTES_EXPOSE_LOGOUT=true
+FIRAUTH_ROUTES_PREFIX=authX
+FIRAUTH_ROUTES_EXPOSE_LOGIN=true
+FIRAUTH_ROUTES_EXPOSE_REFRESH=true
+FIRAUTH_ROUTES_EXPOSE_LOGOUT=true
 
 # JWT (tymon)
 JWT_ALGO=RS256              # RS256 recommended (or HS256)
@@ -123,7 +123,7 @@ JWT_PRIVATE_KEY="file:///absolute/path/to/private.pem"
 JWT_SECRET=change_me_please
 ```
 
-> **Tip:** For local dev cookie tests, map a host in `/etc/hosts` (e.g., `127.0.0.1 api.your-domain.test`) and use `AUTHX_COOKIE_DOMAIN=.your-domain.test` so the browser/Postman attaches cookies correctly.
+> **Tip:** For local dev cookie tests, map a host in `/etc/hosts` (e.g., `127.0.0.1 api.your-domain.test`) and use `FIRAUTH_COOKIE_DOMAIN=.your-domain.test` so the browser/Postman attaches cookies correctly.
 
 ### JWT (RS256 vs HS256)
 
@@ -132,7 +132,7 @@ JWT_SECRET=change_me_please
 
 ### Cookie transport
 
-When `AUTHX_STRATEGY=cookie` the package sets an `HttpOnly` cookie named `authx_token`. Configure domain/samesite/secure flags in config/env. Consumers under subdomains will automatically receive the cookie.
+When `FIRAUTH_STRATEGY=cookie` the package sets an `HttpOnly` cookie named `firauth_token`. Configure domain/samesite/secure flags in config/env. Consumers under subdomains will automatically receive the cookie.
 
 > The middleware prefers the cookie in cookie strategy; otherwise it falls back to the `Authorization: Bearer` header.
 
@@ -141,7 +141,7 @@ When `AUTHX_STRATEGY=cookie` the package sets an `HttpOnly` cookie named `authx_
 Single‑session across services is enforced by a `session_id` claim bound to Redis:
 
 - On login, a `session_id` is included in the JWT (either from your `getJWTCustomClaims()` or generated).
-- Middleware validates `session_id` against Redis (`AUTHX_SESSION_REDIS`  `AUTHX_SESSION_KEY_PREFIX`).
+- Middleware validates `session_id` against Redis (`FIRAUTH_SESSION_REDIS`  `FIRAUTH_SESSION_KEY_PREFIX`).
 - Logout revokes the Redis entry and blacklists the token.
 
 ### Routes toggles
@@ -149,9 +149,9 @@ Single‑session across services is enforced by a `session_id` claim bound to Re
 You can selectively expose package routes:
 
 ```env
-AUTHX_ROUTES_EXPOSE_LOGIN=true|false
-AUTHX_ROUTES_EXPOSE_REFRESH=true|false
-AUTHX_ROUTES_EXPOSE_LOGOUT=true|false
+FIRAUTH_ROUTES_EXPOSE_LOGIN=true|false
+FIRAUTH_ROUTES_EXPOSE_REFRESH=true|false
+FIRAUTH_ROUTES_EXPOSE_LOGOUT=true|false
 ```
 
 Disable only login to override it in your app while keeping refresh/logout from the package.
@@ -164,14 +164,14 @@ Disable only login to override it in your app while keeping refresh/logout from 
 
 1. Run the installer and choose **Main service = yes**.
 2. Set RS256 keys using `file://` paths in `.env` (or use HS256 with `JWT_SECRET`).
-3. If using cookies, configure `AUTHX_COOKIE_DOMAIN` for your apex/subdomains.
+3. If using cookies, configure `FIRAUTH_COOKIE_DOMAIN` for your apex/subdomains.
 4. Test login:
    ```bash
    curl -i -X POST https://api.your-domain.com/authX/login \
      -H 'Content-Type: application/json' \
      -d '{"email":"user@example.com","password":"secret"}'
    ```
-   You should see a JSON response and a `Set-Cookie: authx_token=...` header (cookie strategy).
+   You should see a JSON response and a `Set-Cookie: firauth_token=...` header (cookie strategy).
 
 ### Consumer services
 
@@ -209,7 +209,7 @@ You can replace only the login endpoint and reuse the package’s services:
 
 1. Disable the package login route in `.env`:
    ```env
-   AUTHX_ROUTES_EXPOSE_LOGIN=false
+   FIRAUTH_ROUTES_EXPOSE_LOGIN=false
    ```
 
 2. Create a **subclass** of the base controller and override `login()`:
@@ -314,7 +314,7 @@ Register your checkers in `config/authx.php`:
 
 - Set a window to refresh **only when near expiry** or expired:
   ```env
-  AUTHX_RENEW_WINDOW=600   # 10 minutes
+  FIRAUTH_RENEW_WINDOW=600   # 10 minutes
   ```
 - Behavior at `/authX/refresh`:
     - If token **far from expiry** → `{ "still_valid": true, "expires_in": <seconds> }`
@@ -377,43 +377,63 @@ curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/authX/
 
 ## Postman Tips
 
-- **Do not** paste the full `Set‑Cookie` header as your `Cookie` header; send only `Cookie: authx_token=<TOKEN>`.
-- In cookie mode, prefer using a host that matches `AUTHX_COOKIE_DOMAIN` (e.g., `api.your-domain.test`) so Postman attaches cookies automatically.
+- **Do not** paste the full `Set‑Cookie` header as your `Cookie` header; send only `Cookie: firauth_token=<TOKEN>`.
+- In cookie mode, prefer using a host that matches `FIRAUTH_COOKIE_DOMAIN` (e.g., `api.your-domain.test`) so Postman attaches cookies automatically.
 - If both cookie *and* `Authorization` header are present, cookie is preferred in cookie strategy (package behavior). Keep your `Authorization` header clean to avoid sending stale tokens.
 
 ---
 
-## Troubleshooting
 
-- **“Token has been blacklisted” in Postman** → you’re likely sending an old `Authorization` token. Remove it or update it to the latest. In cookie strategy, rely on the cookie only.
-- **Cookie not sent** → ensure request host matches `AUTHX_COOKIE_DOMAIN`. Use `/etc/hosts` for local dev.
-- **RS256 verify fails on consumer** → confirm `JWT_PUBLIC_KEY` path and that it matches the main’s private key.
-- **Second logout still returns 200** → protect `/authX/logout` with `authx` middleware (full check), not `authx.token`.
+# What’s Next (Roadmap)
 
----
 
-## Security Notes
+### 1. Pluggable Session Stores (Not Only Redis)
 
-- Always use **HTTPS** in production (cookies marked `Secure`).
-- For cross‑site cookie use, set `SameSite=None` and HTTPS only.
-- Rate‑limit login/refresh (`throttle:`).
-- Consider HMAC or signed headers for integration flows in pre checkers.
-- Keep private keys off consumer services when using RS256.
+Make the session binding layer driver-based so teams can choose from:
 
----
+- Redis (default)
+- Database
+- File
+- In-memory / Array (for testing)
+- Custom-defined stores
 
-## Optional Artisan Commands
-
-> These may be shipped with the package for convenience:
-
-- `php artisan authx:make-keys [--bits=4096] [--path=resources/keys/authx]`  
-  Generates RSA keypair, prints `file://` URIs, optionally patches `.env`.
-
-- `php artisan authx:verify {token?}`  
-  Decodes a JWT and prints header, claims, `exp`, remaining seconds, blacklist state (if applicable).
+**Goal:** Decouple session handling from Redis to allow for flexible and testable implementations.
 
 ---
 
-## License
+### 2. Multi-Device Sessions & Revocation UX
 
-MIT
+Support **both** `single-session` (default today) and `multi-session` modes.
+
+####  Modes
+
+- `single`: One active `session_id` per user (current behavior).
+- `multi`: Track a **set** of session IDs per user.
+    - `revoke(user, session_id)` → removes one device
+    - `revoke(user, null)` → removes all sessions for the user
+
+####  Claims
+
+Add optional claims:
+- `device_id`
+- `client metadata` (OS, browser, device info)
+
+####  APIs (optional)
+
+- `GET /authX/sessions` → List all active devices
+- `DELETE /authX/sessions/{session_id}` → Revoke specific device
+
+#### ⚙ Dev Experience
+
+- Artisan command:
+  ```bash
+  php artisan authx:sessions {userId}
+---
+
+### 3. Pre-Built SSO Adapters (as Pre-Checkers)
+
+Ship optional pre-auth adapters for popular identity providers:
+- OAuth2 / OIDC flows:
+  - Microsoft
+  - Google
+  - GitHub.
