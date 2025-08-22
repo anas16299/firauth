@@ -1,12 +1,12 @@
-# AuthX — JWT / Cookie Authentication for Multi‑Service Laravel
+# FirAuth — JWT / Cookie Authentication for Multi‑Service Laravel
 
-AuthX provides a clean, extensible authentication layer for **multi‑service** Laravel setups:
+FirAuth provides a clean, extensible authentication layer for **multi‑service** Laravel setups:
 
 -  **JWT (RS256 recommended)** — sign on the **main** service, verify on **consumer** services
 -  **Cookie or Bearer transport** — HttpOnly cookie across subdomains, or `Authorization: Bearer`
 -  **Single‑session via Redis** — `session_id` claim validated across services
 -  **Pre / Post checkers** — plug custom gates (integration credentials, password reset, MFA, timezone, …)
--  **Drop‑in routes** — `/authX/login`, `/authX/refresh`, `/authX/logout`
+-  **Drop‑in routes** — `/firauth/login`, `/firauth/refresh`, `/firauth/logout`
 -  **Stateless on consumers** — `request()->user()` is built from JWT claims (no DB hit)
 
 > Package namespace used below: **`cs/auth`** (PSR‑4 root: `cs\auth\`).  
@@ -64,7 +64,7 @@ php artisan firauth:install
 
 The installer will ask you:
 
-- Is this the **MAIN** service? (issues tokens and exposes /authX routes)
+- Is this the **MAIN** service? (issues tokens and exposes /firauth routes)
 - Strategy: `cookie` (HttpOnly) or `jwt`
 - Redis connection  TTL (seconds) for sessions
 - JWT: **RS256** (preferred) or HS256, along with TTLs and key paths
@@ -102,7 +102,7 @@ FIRAUTH_USE_MODEL_CLAIMS=true  # use getJWTCustomClaims() from your User model
 FIRAUTH_BIND_SESSION=false     # bind Redis session at login automatically
 
 # Route options
-FIRAUTH_ROUTES_PREFIX=authX
+FIRAUTH_ROUTES_PREFIX=firauth
 FIRAUTH_ROUTES_EXPOSE_LOGIN=true
 FIRAUTH_ROUTES_EXPOSE_REFRESH=true
 FIRAUTH_ROUTES_EXPOSE_LOGOUT=true
@@ -167,7 +167,7 @@ Disable only login to override it in your app while keeping refresh/logout from 
 3. If using cookies, configure `FIRAUTH_COOKIE_DOMAIN` for your apex/subdomains.
 4. Test login:
    ```bash
-   curl -i -X POST https://api.your-domain.com/authX/login \
+   curl -i -X POST https://api.your-domain.com/firauth/login \
      -H 'Content-Type: application/json' \
      -d '{"email":"user@example.com","password":"secret"}'
    ```
@@ -179,7 +179,7 @@ Disable only login to override it in your app while keeping refresh/logout from 
 2. Configure **only the public key** for RS256 (`JWT_PUBLIC_KEY`).
 3. Protect routes with the middleware:
    ```php
-   Route::middleware('authx')->group(function () {
+   Route::middleware('firauth')->group(function () {
        Route::get('/me', fn() => response()->json(request()->user()));
        // your protected routes…
    });
@@ -192,14 +192,14 @@ The middleware will verify signature/expiry/nbf/blacklist, validate the Redis `s
 
 **Routes (package):**
 
-- `POST /authX/login` — issues the JWT (+ `Set-Cookie` in cookie mode)
-- `POST /authX/refresh` — refreshes token; middleware: `authx.token` (token presence; accepts expired token)
-- `POST /authX/logout` — blacklists current token  revokes Redis session; middleware: `authx` (full check)
+- `POST /firauth/login` — issues the JWT (+ `Set-Cookie` in cookie mode)
+- `POST /firauth/refresh` — refreshes token; middleware: `firauth.token` (token presence; accepts expired token)
+- `POST /firauth/logout` — blacklists current token  revokes Redis session; middleware: `firauth` (full check)
 
 **Middlewares:**
 
-- `authx` — Full verification (signature, expiry, blacklist)  Redis `session_id` validation; binds `request()->user()` from claims.
-- `authx.token` — Helper that injects cookie token into the `Authorization` header if missing (used for `/refresh`).
+- `firauth` — Full verification (signature, expiry, blacklist)  Redis `session_id` validation; binds `request()->user()` from claims.
+- `firauth.token` — Helper that injects cookie token into the `Authorization` header if missing (used for `/refresh`).
 
 ---
 
@@ -232,7 +232,7 @@ You can replace only the login endpoint and reuse the package’s services:
            ]);
 
            $rememberDays = $request->boolean('remember')
-               ? (int) config('authx.jwt.remember_me_days')
+               ? (int) config('firauth.jwt.remember_me_days')
                : null;
 
            // Reuse token driver (no direct Tymon calls here)
@@ -249,7 +249,7 @@ You can replace only the login endpoint and reuse the package’s services:
            $user      = $result['user'];
            $sessionId = $claims['session_id'] ?? null;
 
-           if (config('authx.jwt.bind_session_in_login', false) && $sessionId) {
+           if (config('firauth.jwt.bind_session_in_login', false) && $sessionId) {
                $this->sessions->bind($user['id'], $sessionId);
            }
 
@@ -263,7 +263,7 @@ You can replace only the login endpoint and reuse the package’s services:
    ```php
    // routes/api.php
    use App\Http\Controllers\Auth\CustomAuthController;
-   Route::post('authX/login', [CustomAuthController::class, 'login']);
+   Route::post('firauth/login', [CustomAuthController::class, 'login']);
    ```
 
 ---
@@ -294,7 +294,7 @@ interface PostAuthCheckerInterface {
 }
 ```
 
-Register your checkers in `config/authx.php`:
+Register your checkers in `config/firauth.php`:
 
 ```php
 'middleware' => [
@@ -316,7 +316,7 @@ Register your checkers in `config/authx.php`:
   ```env
   FIRAUTH_RENEW_WINDOW=600   # 10 minutes
   ```
-- Behavior at `/authX/refresh`:
+- Behavior at `/firauth/refresh`:
     - If token **far from expiry** → `{ "still_valid": true, "expires_in": <seconds> }`
     - If **expired** or **within window** → a **new token** is issued; the old is **blacklisted** immediately.
 - To reduce races during refresh (parallel requests):
@@ -328,7 +328,7 @@ Register your checkers in `config/authx.php`:
 
 ## Logout Behavior
 
-- `POST /authX/logout` (middleware: `authx` full check):
+- `POST /firauth/logout` (middleware: `firauth` full check):
     - Blacklists the current token.
     - Revokes the Redis session entry → **global single‑session kill**.
     - Returns 200 (cookie cleared if cookie strategy).
@@ -341,7 +341,7 @@ Register your checkers in `config/authx.php`:
 **JWT (header)**
 ```bash
 # Login (get token)
-TOKEN=$(curl -s -X POST https://api.your-domain.com/authX/login \
+TOKEN=$(curl -s -X POST https://api.your-domain.com/firauth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"secret"}' | jq -r '.data.token')
 
@@ -349,23 +349,23 @@ TOKEN=$(curl -s -X POST https://api.your-domain.com/authX/login \
 curl -H "Authorization: Bearer $TOKEN" https://api.your-domain.com/protected
 
 # Refresh
-curl -X POST -H "Authorization: Bearer $TOKEN" https://api.your-domain.com/authX/refresh
+curl -X POST -H "Authorization: Bearer $TOKEN" https://api.your-domain.com/firauth/refresh
 
 # Logout
-curl -X POST -H "Authorization: Bearer $TOKEN" https://api.your-domain.com/authX/logout
+curl -X POST -H "Authorization: Bearer $TOKEN" https://api.your-domain.com/firauth/logout
 ```
 
 **Cookie**
 ```bash
 # Let curl manage cookies automatically (-c to save, -b to send)
-curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/authX/login \
+curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/firauth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"secret"}'
 
 # Refresh / protected / logout
-curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/authX/refresh
+curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/firauth/refresh
 curl -c cookies.txt -b cookies.txt -i https://api.your-domain.com/protected
-curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/authX/logout
+curl -c cookies.txt -b cookies.txt -i -X POST https://api.your-domain.com/firauth/logout
 ```
 
 **Feature tests (Laravel)**
@@ -420,14 +420,14 @@ Add optional claims:
 
 ####  APIs (optional)
 
-- `GET /authX/sessions` → List all active devices
-- `DELETE /authX/sessions/{session_id}` → Revoke specific device
+- `GET /firauth/sessions` → List all active devices
+- `DELETE /firauth/sessions/{session_id}` → Revoke specific device
 
 #### ⚙ Dev Experience
 
 - Artisan command:
   ```bash
-  php artisan authx:sessions {userId}
+  php artisan firauth:sessions {userId}
 ---
 
 ### 3. Pre-Built SSO Adapters (as Pre-Checkers)
