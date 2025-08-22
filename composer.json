@@ -1,5 +1,5 @@
 {
-    "name": "cs/firauth",
+    "name": "anastosios/firauth",
     "description": "JWT + Cookie Auth Package",
     "type": "library",
     "license": "MIT",
