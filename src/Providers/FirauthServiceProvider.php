@@ -3,6 +3,7 @@
 namespace Firauth\Providers;
 
 use Firauth\Drivers\JwtTymonDriver;
+use Firauth\Drivers\PublicKeyJwtDriver;
 use Firauth\Transport\BodyTransport;
 use Firauth\Session\NullSessionStore;
 use Firauth\Session\RedisSessionStore;
@@ -28,6 +29,8 @@ class FirauthServiceProvider extends ServiceProvider
             switch ($driver) {
                 case 'tymon_jwt':
                     return new JwtTymonDriver();
+                case 'public':
+                    return new PublicKeyJwtDriver();
                 default:
                     throw new \RuntimeException('Unsupported firauth driver: ' . $driver);
             }

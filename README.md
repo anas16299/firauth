@@ -9,7 +9,7 @@ FirAuth provides a clean, extensible authentication layer for **multi‑service*
 -  **Drop‑in routes** — `/firauth/login`, `/firauth/refresh`, `/firauth/logout`
 -  **Stateless on consumers** — `request()->user()` is built from JWT claims (no DB hit)
 
-> Package namespace used below: **`cs/auth`** (PSR‑4 root: `cs\auth\`).  
+> Package namespace used below: **`cs/auth`** (PSR‑4 root: `Firauth\auth\`).  
 > Adjust to your vendor/name if you publish under another vendor on Packagist.
 
 ---
@@ -53,7 +53,7 @@ FirAuth provides a clean, extensible authentication layer for **multi‑service*
 ## Installation
 
 ```bash
-composer require cs/auth
+composer require anastosios/firauth
 
 # Publish config
 php artisan vendor:publish --tag=firauth-config
@@ -219,7 +219,7 @@ You can replace only the login endpoint and reuse the package’s services:
 
    use Illuminate\Http\Request;
    use Illuminate\Validation\ValidationException;
-   use cs\auth\Http\Controllers\AuthController as BaseAuthController;
+   use Firauth\auth\Http\Controllers\AuthController as BaseAuthController;
 
    class CustomAuthController extends BaseAuthController
    {

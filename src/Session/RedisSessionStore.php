@@ -70,6 +70,11 @@ class RedisSessionStore implements SessionStoreInterface
     {
         $redis = Redis::connection($this->connection);
         $expected = $redis->get($this->key($userId));
+
+        if (is_null($expected)) {
+            return false;
+        }
+
         if (!empty($expected) && $expected !== $sessionId) {
             return false;
         }

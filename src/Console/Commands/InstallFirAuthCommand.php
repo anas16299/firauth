@@ -83,6 +83,7 @@ class InstallFirAuthCommand extends Command
         // MAIN SERVICE?
         $isMain = $this->confirm('Is this the MAIN auth service (exposes /FIRAUTH routes)?', (bool) env('FIRAUTH_MAIN_SERVICE', false));
         $this->setEnv('FIRAUTH_MAIN_SERVICE', $isMain ? 'true' : 'false');
+        $this->setEnv('FIRAUTH_DRIVER', $isMain ? 'tymon_jwt' : 'public');
 
         // STRATEGY
         $strategy = $this->choice('Auth strategy', ['cookie', 'jwt'], env('FIRAUTH_STRATEGY', 'jwt') === 'cookie' ? 0 : 1);
