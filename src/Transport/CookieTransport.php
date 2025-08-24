@@ -91,20 +91,11 @@ class CookieTransport implements TransportInterface
         $minutes = isset($this->cfg['lifetime']) ? (int)$this->cfg['lifetime'] : 60;
         $path = $this->cfg['path'] ?? '/';
 
-        $env = app()->environment();
-        $isLocalRequest = request()->has('is_local') && request()->boolean('is_local');
-
         $domain = $this->cfg['domain'] ?? null;
         $secure = !isset($this->cfg['secure']) || (bool)$this->cfg['secure'];
         $httpOnly = !isset($this->cfg['http_only']) || (bool)$this->cfg['http_only'];
         $sameSite = $this->cfg['same_site'] ?? 'None';
 
-        $local = config('firauth.local_keys', []);
-        if (in_array($env, $local) && $isLocalRequest) {
-            $domain = 'localhost';
-            $secure = false;
-            $sameSite = 'Lax';
-        }
 
         return $response->cookie(
             $name,
