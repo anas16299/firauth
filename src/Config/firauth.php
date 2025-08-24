@@ -137,6 +137,8 @@ return [
         ],
     ],
 
+    'local_keys'=>['testing','test','stg','staging','local','dev','development']
+
 
 
 ];

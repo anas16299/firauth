@@ -99,7 +99,8 @@ class CookieTransport implements TransportInterface
         $httpOnly = !isset($this->cfg['http_only']) || (bool)$this->cfg['http_only'];
         $sameSite = $this->cfg['same_site'] ?? 'None';
 
-        if (in_array($env, ['local', 'stg', 'test']) && $isLocalRequest) {
+        $local = config('firauth.local_keys', []);
+        if (in_array($env, $local) && $isLocalRequest) {
             $domain = 'localhost';
             $secure = false;
             $sameSite = 'Lax';
