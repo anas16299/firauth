@@ -51,7 +51,7 @@ return [
         // Whether the cookie is accessible only through HTTP(S) protocol
         'http_only' => (bool)env('FIRAUTH_COOKIE_HTTP_ONLY', true),
         // SameSite cookie attribute ('Lax', 'Strict', or 'None')
-        'same_site' => env('FIRAUTH_COOKIE_SAMESITE', 'Lax'),
+        'same_site' => env('FIRAUTH_COOKIE_SAMESITE', 'None'),
         // Cookie path
         'path'      => '/',
     ],
