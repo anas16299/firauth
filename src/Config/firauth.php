@@ -137,7 +137,8 @@ return [
         ],
     ],
 
-    'local_keys'=>['testing','test','stg','staging','local','dev','development']
+    'local_keys'=>['testing','test','stg','staging','local','dev','development'],
+    'generic_user'=>env('FIRAUTH_ENABLE_AUTH_FACADE',false)
 
 
 

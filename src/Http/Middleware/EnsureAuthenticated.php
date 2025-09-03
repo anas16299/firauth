@@ -12,7 +12,9 @@ namespace Firauth\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Auth\GenericUser;
 use Firauth\Support\UserBuilder;
+use Illuminate\Support\Facades\Auth;
 use Firauth\Support\ResponseHandler;
 use Firauth\Contracts\TokenDriverInterface;
 use Firauth\Contracts\SessionStoreInterface;
@@ -107,6 +109,11 @@ class EnsureAuthenticated
         $request->setUserResolver(function () use ($user) {
             return (object)$user;
         });
+
+        if (config('firauth.generic_user', false)){
+            $generic = new GenericUser($user);
+            Auth::setUser($generic);
+        }
         return $next($request);
     }
 
