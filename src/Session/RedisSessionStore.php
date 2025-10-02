@@ -52,7 +52,7 @@ class RedisSessionStore implements SessionStoreInterface
         $key = $this->key($userId);
         $ttl = config('firauth.session.ttl_seconds');
 
-        if ($ttl) {
+        if ($ttl && false) {
             $redis->setex($key, (int)$ttl, $sessionId);
         } else {
             $redis->set($key, $sessionId);

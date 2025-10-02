@@ -30,11 +30,6 @@ class JwtTymonDriver implements TokenDriverInterface
     public function attempt(array $credentials, $rememberDays = null, array $additionalClaims = null)
     {
         $claims = [];
-
-        if (!is_null($rememberDays) && $rememberDays > 0) {
-            $claims['exp'] = Carbon::now()->addDays((int)$rememberDays)->timestamp;
-        }
-
         if (!config('firauth.jwt.use_model_claims', true) && is_array($additionalClaims)) {
             $claims = array_merge($claims, $additionalClaims);
         }
