@@ -14,7 +14,7 @@ interface TransportInterface
      * @param array $userPayload
      * @return JsonResponse
      */
-    public function loginResponse($token, array $userPayload);
+    public function loginResponse($token, array $userPayload,bool $forceResend=false);
 
 
     /**

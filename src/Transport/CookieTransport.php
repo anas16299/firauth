@@ -41,10 +41,12 @@ class CookieTransport implements TransportInterface
      * @param array $userPayload User data payload
      * @return Response
      */
-    public function loginResponse($token, array $userPayload)
+    public function loginResponse($token, array $userPayload,bool $forceResend=false)
     {
         $data = [];
-        if (config('firauth.cookie.return_user_info', false)) {
+        if ($forceResend){
+            $data = $userPayload;
+        }elseif (config('firauth.cookie.return_user_info', false)) {
             $data['user'] = $userPayload;
         }
         $response = ResponseHandler::success($data);

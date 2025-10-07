@@ -23,7 +23,7 @@ class BodyTransport implements TransportInterface
      * @param array $userPayload Additional user information
      * @return JsonResponse
      */
-    public function loginResponse($token, $userPayload): JsonResponse
+    public function loginResponse($token, array $userPayload,bool $forceResend=false): JsonResponse
     {
         return ResponseHandler::success(['token' => $token]);
     }
